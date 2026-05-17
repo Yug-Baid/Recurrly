@@ -1,8 +1,19 @@
+import { ClerkProvider, ClerkLoaded } from '@clerk/expo'
+import { tokenCache } from '@clerk/expo/token-cache'
 import { SplashScreen, Stack } from "expo-router";
 import "@/global.css"
-import {useFonts} from 'expo-font' 
+import { useFonts } from 'expo-font'
 import { useEffect } from "react";
-import { SplitViewHost, SplitViewScreen } from "react-native-screens";
+
+SplashScreen.preventAutoHideAsync()
+
+const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!
+
+if (!publishableKey) {
+  throw new Error(
+    'Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY. Add it to your .env file.',
+  )
+}
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -14,13 +25,19 @@ export default function RootLayout() {
     'sans-light': require('../assets/fonts/PlusJakartaSans-Light.ttf')
   })
 
-  useEffect(()=>{
-    if(fontsLoaded){
+  useEffect(() => {
+    if (fontsLoaded) {
       SplashScreen.hideAsync()
     }
-  },[fontsLoaded])
+  }, [fontsLoaded])
 
-  if(!fontsLoaded) return null;
-  
-  return <Stack screenOptions={{headerShown:false}}/>;
+  if (!fontsLoaded) return null;
+
+  return (
+    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+      <ClerkLoaded>
+        <Stack screenOptions={{ headerShown: false }} />
+      </ClerkLoaded>
+    </ClerkProvider>
+  );
 }
