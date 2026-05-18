@@ -31,6 +31,6 @@ We've built some insights and a dashboard for you to keep an eye on user behavio
 
 ### Agent skill
 
-We've left an agent skill folder in your project. You can use this context for further agent development when using Claude Code. This will help ensure the model provides the most up-to-date approaches for integrating PostHog.
+We've left an agent skill folder at `.claude/skills/integration-expo/` in your project. You can use this context for further agent development when using Claude Code. This will help ensure the model provides the most up-to-date approaches for integrating PostHog.
 
 </wizard-report>

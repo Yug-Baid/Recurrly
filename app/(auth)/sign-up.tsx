@@ -63,7 +63,7 @@ export default function SignUpScreen() {
         $set: { email: emailAddress, name: fullName },
         $set_once: { signup_date: new Date().toISOString() },
       })
-      posthog.capture('user_signed_up', { email: emailAddress, name: fullName })
+      posthog.capture('user_signed_up', { signup_method: 'email', is_verified: true })
       await signUp.finalize({
         navigate: ({ session, decorateUrl }) => {
           if (session?.currentTask) return

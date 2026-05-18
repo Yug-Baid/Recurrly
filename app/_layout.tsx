@@ -39,9 +39,16 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (previousPathname.current !== pathname) {
+      const SENSITIVE_KEYS = new Set(['code', 'token', 'state', 'session_id', 'nonce', 'password', 'secret'])
+      const sanitizedParams: Record<string, unknown> = {}
+      for (const [key, value] of Object.entries(params)) {
+        if (!SENSITIVE_KEYS.has(key.toLowerCase())) {
+          sanitizedParams[key] = value
+        }
+      }
       posthog.screen(pathname, {
         previous_screen: previousPathname.current ?? null,
-        ...params,
+        ...sanitizedParams,
       })
       previousPathname.current = pathname
     }

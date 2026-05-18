@@ -70,7 +70,8 @@ const CreateSubscriptionModal = ({
     const [nameError, setNameError] = useState("");
     const [priceError, setPriceError] = useState("");
 
-    const isValid = name.trim().length > 0 && parseFloat(price) > 0;
+    const isStrictlyNumeric = (val: string) => /^\d+(\.\d+)?$/.test(val.trim());
+    const isValid = name.trim().length > 0 && isStrictlyNumeric(price) && Number(price) > 0;
 
     const resetForm = () => {
         setName("");
@@ -96,8 +97,9 @@ const CreateSubscriptionModal = ({
             setNameError("");
         }
 
-        const parsedPrice = parseFloat(price);
-        if (!price || isNaN(parsedPrice) || parsedPrice <= 0) {
+        const priceStr = price.trim();
+        const parsedPrice = Number(priceStr);
+        if (!priceStr || !(/^\d+(\.\d+)?$/.test(priceStr)) || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
             setPriceError("Enter a valid price");
             hasError = true;
         } else {
@@ -130,13 +132,13 @@ const CreateSubscriptionModal = ({
         };
 
         onCreate(subscription);
-        posthog.capture('subscription_created',{
-            name,
+        posthog.capture('subscription_created', {
+            name: name.trim(),
             price: parsedPrice,
             frequency,
-            category,
+            category: selectedCategory,
             plan: `${selectedCategory} Plan`,
-        }   )
+        })
         resetForm();
         onClose();
     };

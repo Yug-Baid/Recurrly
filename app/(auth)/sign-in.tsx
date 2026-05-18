@@ -40,7 +40,7 @@ export default function SignInScreen() {
 
     if (signIn.status === 'complete') {
       posthog.identify(emailAddress, { $set: { email: emailAddress } })
-      posthog.capture('user_signed_in', { email: emailAddress })
+      posthog.capture('user_signed_in', { method: 'password' })
       await signIn.finalize({
         navigate: ({ session, decorateUrl }) => {
           if (session?.currentTask) return
@@ -63,6 +63,8 @@ export default function SignInScreen() {
     await signIn.mfa.verifyEmailCode({ code: verificationCode })
 
     if (signIn.status === 'complete') {
+      posthog.identify(emailAddress, { $set: { email: emailAddress } })
+      posthog.capture('user_signed_in', { method: 'mfa' })
       await signIn.finalize({
         navigate: ({ session, decorateUrl }) => {
           if (session?.currentTask) return
@@ -71,7 +73,7 @@ export default function SignInScreen() {
         },
       })
     }
-  }, [signIn, verificationCode, router])
+  }, [signIn, verificationCode, router, posthog, emailAddress])
 
   // ═══════════════════════════════════════════════════════════════
   // MFA / Client-Trust verification screen
