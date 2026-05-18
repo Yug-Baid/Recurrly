@@ -1,9 +1,11 @@
 import { ClerkProvider, ClerkLoaded } from '@clerk/expo'
 import { tokenCache } from '@clerk/expo/token-cache'
-import { SplashScreen, Stack } from "expo-router";
+import { SplashScreen, Stack, usePathname, useGlobalSearchParams } from "expo-router";
 import "@/global.css"
 import { useFonts } from 'expo-font'
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { PostHogProvider } from 'posthog-react-native';
+import { posthog } from '../src/config/posthog'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -25,19 +27,48 @@ export default function RootLayout() {
     'sans-light': require('../assets/fonts/PlusJakartaSans-Light.ttf')
   })
 
+  const pathname = usePathname()
+  const params = useGlobalSearchParams()
+  const previousPathname = useRef<string | undefined>(undefined)
+
   useEffect(() => {
     if (fontsLoaded) {
       SplashScreen.hideAsync()
     }
   }, [fontsLoaded])
 
+  useEffect(() => {
+    if (previousPathname.current !== pathname) {
+      const SENSITIVE_KEYS = new Set(['code', 'token', 'state', 'session_id', 'nonce', 'password', 'secret'])
+      const sanitizedParams: Record<string, unknown> = {}
+      for (const [key, value] of Object.entries(params)) {
+        if (!SENSITIVE_KEYS.has(key.toLowerCase())) {
+          sanitizedParams[key] = value
+        }
+      }
+      posthog.screen(pathname, {
+        previous_screen: previousPathname.current ?? null,
+        ...sanitizedParams,
+      })
+      previousPathname.current = pathname
+    }
+  }, [pathname, params])
+
   if (!fontsLoaded) return null;
 
   return (
-    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <ClerkLoaded>
-        <Stack screenOptions={{ headerShown: false }} />
-      </ClerkLoaded>
-    </ClerkProvider>
+    <PostHogProvider
+      client={posthog}
+      autocapture={{
+        captureScreens: false,
+        captureTouches: true,
+      }}
+    >
+      <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
+        <ClerkLoaded>
+          <Stack screenOptions={{ headerShown: false }} />
+        </ClerkLoaded>
+      </ClerkProvider>
+    </PostHogProvider>
   );
 }

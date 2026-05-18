@@ -3,18 +3,23 @@ import React, { useState } from 'react'
 import { SafeAreaView as RNSafeViewArea } from "react-native-safe-area-context";
 import { styled } from "nativewind"
 import { useClerk, useUser } from '@clerk/expo'
+import { usePostHog } from 'posthog-react-native'
 
 const SafeAreaView = styled(RNSafeViewArea);
 
 const Settings = () => {
   const { signOut } = useClerk()
   const { user } = useUser()
+  const posthog = usePostHog()
   const [signingOut, setSigningOut] = useState(false)
 
   const handleSignOut = async () => {
     setSigningOut(true)
     try {
       await signOut()
+      posthog.capture('user_signed_out')
+      await posthog.flush()
+      posthog.reset()
     } catch (e) {
       console.error('Sign-out error:', e)
       setSigningOut(false)
