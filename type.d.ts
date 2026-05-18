@@ -12,9 +12,16 @@ declare global {
         icon: ImageSourcePropType;
     }
 
+    interface SubscriptionVectorIcon {
+        name: string;
+        library: "MaterialCommunityIcons" | "Ionicons" | "FontAwesome5";
+        color?: string;
+    }
+
     interface Subscription {
         id: string;
-        icon: ImageSourcePropType;
+        icon?: ImageSourcePropType;
+        vectorIcon?: SubscriptionVectorIcon;
         name: string;
         plan?: string;
         category?: string;

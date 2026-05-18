@@ -2,13 +2,43 @@ import {View, Text, Image, Pressable} from 'react-native'
 import React from 'react'
 import {formatCurrency, formatStatusLabel, formatSubscriptionDateTime} from "@/lib/utils";
 import clsx from "clsx";
+import { MaterialCommunityIcons, Ionicons, FontAwesome5 } from "@expo/vector-icons";
 
-const SubscriptionCard = ({ name, price, currency, icon, billing, color, category, plan, renewalDate, expanded, onPress, paymentMethod, startDate, status}: SubscriptionCardProps) => {
+const ICON_LIBRARIES = {
+    MaterialCommunityIcons,
+    Ionicons,
+    FontAwesome5,
+} as const;
+
+const SubscriptionIcon = ({ icon, vectorIcon }: { icon?: SubscriptionCardProps["icon"]; vectorIcon?: SubscriptionCardProps["vectorIcon"] }) => {
+    if (vectorIcon) {
+        const IconComponent = ICON_LIBRARIES[vectorIcon.library];
+        return (
+            <View className="sub-icon items-center justify-center rounded-2xl bg-muted">
+                {/* @ts-ignore – dynamic icon component */}
+                <IconComponent name={vectorIcon.name} size={30} color={vectorIcon.color ?? "#081126"} />
+            </View>
+        );
+    }
+
+    if (icon) {
+        return <Image source={icon} className="sub-icon" />;
+    }
+
+    // Fallback: generic icon
+    return (
+        <View className="sub-icon items-center justify-center rounded-2xl bg-muted">
+            <MaterialCommunityIcons name="package-variant" size={30} color="#081126" />
+        </View>
+    );
+};
+
+const SubscriptionCard = ({ name, price, currency, icon, vectorIcon, billing, color, category, plan, renewalDate, expanded, onPress, paymentMethod, startDate, status}: SubscriptionCardProps) => {
     return (
         <Pressable onPress={onPress} className={clsx('sub-card', expanded ? 'sub-card-expanded' : 'bg-card')} style={!expanded && color ? { backgroundColor: color } : undefined}>
             <View className="sub-head">
                 <View className="sub-main">
-                    <Image source={icon} className="sub-icon" />
+                    <SubscriptionIcon icon={icon} vectorIcon={vectorIcon} />
                     <View className="sub-copy">
                         <Text numberOfLines={1} className="sub-title">
                             {name}

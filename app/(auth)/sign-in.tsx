@@ -1,6 +1,7 @@
 import { useSignIn } from '@clerk/expo'
 import { type Href, Link, useRouter } from 'expo-router'
 import React, { useCallback, useState } from 'react'
+import { usePostHog } from 'posthog-react-native'
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -20,6 +21,7 @@ const SafeAreaView = styled(RNSafeAreaView)
 export default function SignInScreen() {
   const { signIn, errors, fetchStatus } = useSignIn()
   const router = useRouter()
+  const posthog = usePostHog()
 
   const [emailAddress, setEmailAddress] = useState('')
   const [password, setPassword] = useState('')
@@ -37,6 +39,8 @@ export default function SignInScreen() {
     if (error) return
 
     if (signIn.status === 'complete') {
+      posthog.identify(emailAddress, { $set: { email: emailAddress } })
+      posthog.capture('user_signed_in', { email: emailAddress })
       await signIn.finalize({
         navigate: ({ session, decorateUrl }) => {
           if (session?.currentTask) return
@@ -52,7 +56,7 @@ export default function SignInScreen() {
       )
       if (emailCodeFactor) await signIn.mfa.sendEmailCode()
     }
-  }, [signIn, emailAddress, password, router])
+  }, [signIn, emailAddress, password, router, posthog])
 
   // ─── MFA verification handler ──────────────────────────────────
   const handleVerify = useCallback(async () => {
@@ -301,7 +305,7 @@ export default function SignInScreen() {
 
             {/* ── Footer link ── */}
             <View className="auth-link-row">
-              <Text className="auth-link-copy">Don't have an account?</Text>
+              <Text className="auth-link-copy">Don&apos;t have an account?</Text>
               <Link href="/(auth)/sign-up" asChild>
                 <Pressable hitSlop={8}>
                   <Text className="auth-link">Create one</Text>

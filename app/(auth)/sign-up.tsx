@@ -1,6 +1,7 @@
 import { useAuth, useSignUp } from '@clerk/expo'
 import { type Href, Link, useRouter } from 'expo-router'
 import React, { useCallback, useState } from 'react'
+import { usePostHog } from 'posthog-react-native'
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -21,6 +22,7 @@ export default function SignUpScreen() {
   const { signUp, errors, fetchStatus } = useSignUp()
   const { isSignedIn } = useAuth()
   const router = useRouter()
+  const posthog = usePostHog()
 
   const [fullName, setFullName] = useState('')
   const [emailAddress, setEmailAddress] = useState('')
@@ -57,6 +59,11 @@ export default function SignUpScreen() {
     await signUp.verifications.verifyEmailCode({ code: verificationCode })
 
     if (signUp.status === 'complete') {
+      posthog.identify(emailAddress, {
+        $set: { email: emailAddress, name: fullName },
+        $set_once: { signup_date: new Date().toISOString() },
+      })
+      posthog.capture('user_signed_up', { email: emailAddress, name: fullName })
       await signUp.finalize({
         navigate: ({ session, decorateUrl }) => {
           if (session?.currentTask) return
@@ -65,7 +72,7 @@ export default function SignUpScreen() {
         },
       })
     }
-  }, [signUp, verificationCode, router])
+  }, [signUp, verificationCode, router, posthog, emailAddress, fullName])
 
   // Already signed in — don't render
   if (signUp.status === 'complete' || isSignedIn) {
